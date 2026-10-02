@@ -1,0 +1,80 @@
+name: AI Developer - Daily
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+      timezone: "Asia/Kolkata"
+  workflow_dispatch:
+
+concurrency:
+  group: ai-developer-daily
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+
+jobs:
+  develop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 20
+
+      - name: Run AI developer
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          base_branch: main
+          branch_prefix: ai-developer/
+          branch_name_template: "{{prefix}}daily-{{timestamp}}"
+          additional_permissions: |
+            actions: read
+          claude_args: |
+            --max-turns 20
+            --max-budget-usd 2
+            --allowedTools "Read,Edit,Write,Bash(git status),Bash(git diff:*),Bash(git log:*),Bash(python:*),Bash(pip:*),Bash(pytest:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(gh pr:*),Bash(gh issue:*)"
+          prompt: |
+            You are the autonomous AI developer for sanju-vishu/auto-url-shortner.
+
+            Goal:
+            Build production quality features from ROADMAP.md, improve security, add tests,
+            and fix bugs. Work on exactly one focused, highest-priority safe roadmap item
+            per run unless a closely related bug/test change is required.
+
+            Repository rules:
+            - Never push application changes directly to main.
+            - Work on a new branch based on main using the configured AI developer branch prefix.
+            - Inspect the existing code before editing.
+            - Preserve the current FastAPI/SQLAlchemy architecture unless there is a concrete reason to change it.
+            - Add regression/unit/integration tests for every behavior change.
+            - Run pytest -q and any relevant validation before committing.
+            - Do not commit .env files, API keys, passwords, tokens, credentials, or generated secrets.
+            - Do not perform destructive production/database operations.
+            - Keep backward compatibility for existing documented API behavior unless the roadmap item explicitly changes it.
+            - Update README.md when user-facing setup or behavior changes.
+            - Keep the PR focused and explain risks, tests, and migration considerations.
+
+            Security priorities:
+            - authentication/authorization and tenant isolation
+            - input validation and safe error handling
+            - rate limiting and abuse prevention
+            - secure headers/proxy configuration
+            - dependency/security hygiene
+            - privacy-safe analytics
+
+            Before finishing:
+            1. Read ROADMAP.md and select the highest-priority unchecked item.
+            2. Inspect related code and tests.
+            3. Implement the smallest complete solution.
+            4. Add tests and run pytest -q.
+            5. Review git diff for accidental secrets or unrelated changes.
+            6. Commit only the intended changes.
+            7. Push the new branch.
+            8. If changes were made and no PR already exists for the branch, create a PR targeting main with a useful title/body.
+            9. If a blocker prevents a safe implementation, make no speculative code changes and explain the blocker in the workflow summary.
