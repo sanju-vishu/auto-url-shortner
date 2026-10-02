@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ app_name }} — URL Shortener</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="/"><span class="brand-mark">↗</span> {{ app_name }}</a>
+    <div class="nav-right"><span class="status-dot"></span> URL tools, simplified</div>
+  </nav>
+  <main class="container">
+    <section class="hero">
+      <div class="eyebrow">FAST · SIMPLE · SHAREABLE</div>
+      <h1>Long links.<br><span>Short stories.</span></h1>
+      <p class="hero-copy">Turn long URLs into clean, memorable links. Create a short link in seconds and keep an eye on clicks from one simple dashboard.</p>
+      <div class="hero-chips"><span>⚡ Instant links</span><span>↗ Click tracking</span><span>⌁ Custom aliases</span></div>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="section-head"><div><h2>Create a short link</h2><p>Paste your destination URL below.</p></div><span class="step">01 / CREATE</span></div>
+      <form id="shorten-form">
+        <label for="url">Destination URL</label>
+        <div class="url-input-wrap"><span class="input-icon">↗</span><input id="url" name="url" type="url" placeholder="https://example.com/your/very/long/link" required></div>
+        <div class="form-grid">
+          <div><label for="alias">Custom alias <span class="optional">optional</span></label><input id="alias" name="custom_alias" placeholder="my-campaign" minlength="3" maxlength="32" pattern="[A-Za-z0-9_-]+"></div>
+          <div><label for="title">Link name <span class="optional">optional</span></label><input id="title" name="title" placeholder="Summer campaign" maxlength="160"></div>
+        </div>
+        <button id="submit-btn" type="submit">Shorten URL <span>→</span></button>
+        <div id="message" class="message" role="status"></div>
+      </form>
+      <div id="result" class="result hidden">
+        <div class="result-icon">✓</div><div class="result-content"><span class="result-label">YOUR SHORT LINK</span><a id="short-url" href="#" target="_blank" rel="noopener noreferrer"></a><div id="original-url" class="original-url"></div></div>
+        <button id="copy-btn" class="copy-btn" type="button">Copy link</button>
+      </div>
+    </section>
+
+    <section class="stats">
+      <div class="stat-card"><div class="stat-icon purple">↗</div><div><div class="stat-label">LINKS SHOWN</div><div class="stat-value">{{ total_links }}</div></div></div>
+      <div class="stat-card"><div class="stat-icon mint">◎</div><div><div class="stat-label">CLICKS ON SHOWN LINKS</div><div class="stat-value">{{ total_clicks }}</div></div></div>
+      <div class="stat-card"><div class="stat-icon peach">⌁</div><div><div class="stat-label">SIMPLE & FAST</div><div class="stat-value">Always</div></div></div>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="section-head"><div><h2>Recent links</h2><p>Your latest shortened URLs.</p></div><span class="step">02 / TRACK</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>LINK</th><th>DESTINATION</th><th>CLICKS</th><th>STATUS</th><th></th></tr></thead>
+        <tbody id="links-body">
+        {% for link in links %}
+          <tr>
+            <td><a class="short-link" href="/{{ link.code }}" target="_blank" rel="noopener noreferrer">{{ base_url }}/{{ link.code }}</a><div class="subtext">{{ link.title or 'Untitled link' }}</div></td>
+            <td class="destination" title="{{ link.original_url }}">{{ link.original_url }}</td>
+            <td><span class="click-count">{{ link.clicks }}</span></td>
+            <td><span class="pill {{ 'inactive' if not link.is_active else 'active' }}">{{ 'Inactive' if not link.is_active else 'Active' }}</span></td>
+            <td><button class="small-copy" data-url="{{ base_url }}/{{ link.code }}">Copy</button></td>
+          </tr>
+        {% else %}
+          <tr id="empty-row"><td colspan="5" class="empty">No links yet. Create your first short link above.</td></tr>
+        {% endfor %}
+        </tbody></table>
+      </div>
+    </section>
+    <footer><span>© 2026 {{ app_name }}</span><span>Built for links that get places.</span><a href="/docs">API documentation ↗</a></footer>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

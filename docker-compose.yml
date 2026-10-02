@@ -1,0 +1,15 @@
+services:
+  pyshort:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      APP_NAME: PyShort
+      BASE_URL: http://localhost:8000
+      DATABASE_URL: sqlite:////app/data/pyshort.db
+      SECRET_KEY: change-this-before-production
+    volumes:
+      - pyshort_data:/app/data
+    restart: unless-stopped
+volumes:
+  pyshort_data:
