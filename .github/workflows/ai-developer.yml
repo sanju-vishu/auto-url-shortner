@@ -116,7 +116,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Email deployment status (optional)
-        if: always() && env.SMTP_SERVER != ''
+        if: always() && env.SMTP_SERVER != '' && steps.schedule.outputs.run == 'true'
         env:
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           SMTP_PORT: ${{ vars.SMTP_PORT || '587' }}
@@ -140,7 +140,7 @@ jobs:
             Run logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Upload status log
-        if: always()
+        if: always() && steps.schedule.outputs.run == 'true'
         uses: actions/upload-artifact@v6
         with:
           name: automation-status-${{ github.run_id }}
