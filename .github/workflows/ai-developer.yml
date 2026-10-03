@@ -116,7 +116,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Email deployment status (optional)
-        if: always() && env.SMTP_SERVER != '' && steps.schedule.outputs.run == 'true'
+        if: always() && steps.schedule.outputs.run == 'true'
         env:
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           SMTP_PORT: ${{ vars.SMTP_PORT || '587' }}
@@ -124,20 +124,42 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           FROM_EMAIL: ${{ secrets.NOTIFY_EMAIL_FROM }}
           TO_EMAIL: ${{ secrets.NOTIFY_EMAIL_TO }}
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: ${{ secrets.SMTP_SERVER }}
-          server_port: ${{ vars.SMTP_PORT || '587' }}
-          username: ${{ secrets.SMTP_USERNAME }}
-          password: ${{ secrets.SMTP_PASSWORD }}
-          subject: "AI Developer status: ${{ steps.claude.outcome || 'skipped' }} - ${{ github.repository }}"
-          to: ${{ secrets.NOTIFY_EMAIL_TO }}
-          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
-          body: |
-            Daily AI developer automation finished.
-            Repository: ${{ github.repository }}
-            AI step outcome: ${{ steps.claude.outcome || 'skipped' }}
-            Run logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          AUTOMATION_STATUS: ${{ steps.claude.outcome || 'unknown' }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import os
+          import smtplib
+          import ssl
+          from email.message import EmailMessage
+
+          keys = ("SMTP_SERVER", "SMTP_USERNAME", "SMTP_PASSWORD", "FROM_EMAIL", "TO_EMAIL")
+          if not all(os.getenv(key) for key in keys):
+              print("Email skipped: SMTP secrets are not fully configured.")
+              raise SystemExit(0)
+
+          status = os.getenv("AUTOMATION_STATUS", "unknown")
+          repo = os.getenv("REPOSITORY", "unknown")
+          run_url = os.getenv("RUN_URL", "")
+          message = EmailMessage()
+          message["Subject"] = f"AI Developer status: {status} - {repo}"
+          message["From"] = os.environ["FROM_EMAIL"]
+          message["To"] = os.environ["TO_EMAIL"]
+          message.set_content(
+              f"Daily AI developer automation finished.\\n"
+              f"Repository: {repo}\\n"
+              f"AI step outcome: {status}\\n"
+              f"Run logs: {run_url}\\n"
+          )
+          with smtplib.SMTP(os.environ["SMTP_SERVER"], int(os.getenv("SMTP_PORT", "587")), timeout=20) as smtp:
+              smtp.ehlo()
+              smtp.starttls(context=ssl.create_default_context())
+              smtp.ehlo()
+              smtp.login(os.environ["SMTP_USERNAME"], os.environ["SMTP_PASSWORD"])
+              smtp.send_message(message)
+          print("Status email sent. SMTP credentials were not logged.")
+          PY
 
       - name: Upload status log
         if: always() && steps.schedule.outputs.run == 'true'
