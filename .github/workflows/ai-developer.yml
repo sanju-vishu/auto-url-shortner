@@ -28,15 +28,15 @@ jobs:
       - name: Select today's randomized IST slot
         id: schedule
         env:
-          GITHUB_EVENT_NAME: ${ github.event_name }}
-          GITHUB_REPOSITORY: ${ github.repository }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: python .github/scripts/random_daily_slot.py
 
       - name: Record skipped slot
         if: steps.schedule.outputs.run != 'true'
         run: |
           echo "No AI changes scheduled for this half-hour slot." >> "$GITHUB_STEP_SUMMARY"
-          echo "Today's selected time: ${ steps.schedule.outputs.selected_time }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Today's selected time: ${{ steps.schedule.outputs.selected_time }}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run AI developer
         id: claude
@@ -44,7 +44,7 @@ jobs:
         continue-on-error: true
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           base_branch: main
           branch_prefix: ai-developer/
           branch_name_template: "{{prefix}}daily-{{timestamp}}"
@@ -92,9 +92,9 @@ jobs:
       - name: Write run status log
         if: always()
         env:
-          STEP_OUTCOME: ${ steps.claude.outcome }}
-          SLOT: ${ steps.schedule.outputs.selected_time }}
-          SHOULD_RUN: ${ steps.schedule.outputs.run }}
+          STEP_OUTCOME: ${{ steps.claude.outcome }}
+          SLOT: ${{ steps.schedule.outputs.selected_time }}
+          SHOULD_RUN: ${{ steps.schedule.outputs.run }}
         run: |
           if [ "$SHOULD_RUN" != "true" ]; then STATUS="SKIPPED"; DETAILS="Today's selected random slot is $SLOT."
           elif [ "$STEP_OUTCOME" = "success" ]; then STATUS="SUCCESS"; DETAILS="AI developer action completed. Review its PR and workflow logs."
@@ -103,47 +103,47 @@ jobs:
           fi
           {
             echo "AI Developer automation status: $STATUS"
-            echo "Repository: ${ github.repository }}"
+            echo "Repository: ${{ github.repository }}"
             echo "Details: $DETAILS"
-            echo "Run logs: ${ github.server_url }}/${ github.repository }}/actions/runs/${ github.run_id }}"
+            echo "Run logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           } | tee automation-status.txt
           {
             echo "## Daily AI Developer status"
             echo ""
             echo "- **Status:** $STATUS"
             echo "- **Details:** $DETAILS"
-            echo "- **Logs:** [Open workflow run](${ github.server_url }}/${ github.repository }}/actions/runs/${ github.run_id }})"
+            echo "- **Logs:** [Open workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Email deployment status (optional)
         if: always() && env.SMTP_SERVER != ''
         env:
-          SMTP_SERVER: ${ secrets.SMTP_SERVER }}
-          SMTP_PORT: ${ vars.SMTP_PORT || '587' }}
-          SMTP_USERNAME: ${ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${ secrets.SMTP_PASSWORD }}
-          FROM_EMAIL: ${ secrets.NOTIFY_EMAIL_FROM }}
-          TO_EMAIL: ${ secrets.NOTIFY_EMAIL_TO }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ vars.SMTP_PORT || '587' }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          FROM_EMAIL: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          TO_EMAIL: ${{ secrets.NOTIFY_EMAIL_TO }}
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: ${ secrets.SMTP_SERVER }}
-          server_port: ${ vars.SMTP_PORT || '587' }}
-          username: ${ secrets.SMTP_USERNAME }}
-          password: ${ secrets.SMTP_PASSWORD }}
-          subject: "AI Developer status: ${ steps.claude.outcome || 'skipped' }} - ${ github.repository }}"
-          to: ${ secrets.NOTIFY_EMAIL_TO }}
-          from: ${ secrets.NOTIFY_EMAIL_FROM }}
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ vars.SMTP_PORT || '587' }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "AI Developer status: ${{ steps.claude.outcome || 'skipped' }} - ${{ github.repository }}"
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
           body: |
             Daily AI developer automation finished.
-            Repository: ${ github.repository }}
-            AI step outcome: ${ steps.claude.outcome || 'skipped' }}
-            Run logs: ${ github.server_url }}/${ github.repository }}/actions/runs/${ github.run_id }}
+            Repository: ${{ github.repository }}
+            AI step outcome: ${{ steps.claude.outcome || 'skipped' }}
+            Run logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Upload status log
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: automation-status-${ github.run_id }}
+          name: automation-status-${{ github.run_id }}
           path: automation-status.txt
           if-no-files-found: ignore
           retention-days: 30
