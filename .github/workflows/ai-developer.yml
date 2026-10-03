@@ -147,10 +147,10 @@ jobs:
           message["From"] = os.environ["FROM_EMAIL"]
           message["To"] = os.environ["TO_EMAIL"]
           message.set_content(
-              f"Daily AI developer automation finished.\\n"
-              f"Repository: {repo}\\n"
-              f"AI step outcome: {status}\\n"
-              f"Run logs: {run_url}\\n"
+              f"Daily AI developer automation finished.\n"
+              f"Repository: {repo}\n"
+              f"AI step outcome: {status}\n"
+              f"Run logs: {run_url}\n"
           )
           with smtplib.SMTP(os.environ["SMTP_SERVER"], int(os.getenv("SMTP_PORT", "587")), timeout=20) as smtp:
               smtp.ehlo()
