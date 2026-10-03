@@ -107,6 +107,10 @@ def deactivate_link(code: str, db: Session = Depends(get_db)):
     db.commit()
     return None
 
+@app.get("/health")
+def health():
+    return {"status": "ok", "app": APP_NAME}
+
 @app.get("/{code}")
 def redirect_short_link(code: str, request: Request, db: Session = Depends(get_db)):
     link = db.scalar(select(ShortLink).where(ShortLink.code == code))
@@ -120,7 +124,4 @@ def redirect_short_link(code: str, request: Request, db: Session = Depends(get_d
     db.commit()
     return RedirectResponse(url=link.original_url, status_code=307)
 
-@app.get("/health")
-def health():
-    return {"status": "ok", "app": APP_NAME}
 
