@@ -109,6 +109,20 @@ DATABASE_URL=postgresql+psycopg://pyshort:YOUR_PASSWORD@localhost:5432/pyshort
 
 Do not commit `.env` files or credentials.
 
+## Daily Windows Git sync
+
+To publish local changes from this Windows checkout to `origin/main` once per day at a randomized time, run this once in PowerShell:
+
+```powershell
+.\scripts\register-daily-deploy.ps1
+```
+
+The scheduled task uses the current Windows account and Git Credential Manager; it does not store a Git token or password in the repository. Before pushing, it fetches `origin/main`, commits changed non-ignored files, and rebases local commits onto the latest remote branch. Non-conflicting changes merge automatically. If files conflict, it aborts the rebase without overwriting either side and records a failure. Review the log at `%LOCALAPPDATA%\SmartUrl\deploy-logs`.
+
+Keep `.env`, private keys, and credentials out of Git. `.gitignore` blocks common secret/config files, and the sync script rejects credential-like staged files and common token/private-key patterns. GitHub branch protection may reject direct pushes; in that case the log records failure and the branch policy must be followed.
+
+This task publishes Git changes; it does not start or update a running Docker/server deployment. A hosting target and its deployment method must be configured separately for that.
+
 ## Docker
 
 ```bash
